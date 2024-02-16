@@ -53,7 +53,7 @@ function check_identifiability(ode::ModelingToolkit.ODESystem;
 		weighted_ordering = true,
 		local_only = false)
 
-	println(res)
+	#println(res)
 	#println(res2)
 
 	@debug "Post-Processing: Converting Nemo output to ModelingToolkit types"
