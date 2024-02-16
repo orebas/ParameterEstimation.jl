@@ -41,7 +41,7 @@ function solve_via_msolve(identifiability_result, model; real_tol = 1e-12)
 
 	all_vars = reduce((x, y) -> union(x, y), vars(poly) for poly in polynomial_system)
 	R, _ = Oscar.PolynomialRing(QQ, string.(all_vars); ordering = :degrevlex)
-	ps = [SIAN.parent_ring_change(poly, R) for poly in polynomial_system]
+	ps = [parent_ring_change(poly, R) for poly in polynomial_system]
 	i = Oscar.ideal(R, ps)
 	all_solutions_ = Vector{Dict}([])
 

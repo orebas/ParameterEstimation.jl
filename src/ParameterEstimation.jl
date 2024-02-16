@@ -15,12 +15,13 @@ using Suppressor
 
 using ProgressMeter, Logging, Printf
 using ModelingToolkit, LinearSolve, LinearAlgebra
-using SIAN, HomotopyContinuation, Groebner, Oscar
+using HomotopyContinuation, Groebner, Oscar
 using .ReturnCode
-import StructuralIdentifiability: eval_at_nemo, ODE
+#import StructuralIdentifiability: eval_at_nemo, ODE
 using BaryRational
 using ForwardDiff
 using ArbNumerics
+using Nemo
 
 #end
 Float = Union{Float64, Float32, Float16, BigFloat}
