@@ -56,7 +56,7 @@ export check_identifiability, estimate, filter_solutions
 		datasize = 9
 		data_sample = ParameterEstimation.sample_data(model, measured_quantities, time_interval,
 			p_true, ic, datasize;)
-		res = ParameterEstimation.estimate(model, measured_quantities, data_sample)
+		res = ParameterEstimation.estimate(model, measured_quantities, data_sample, disable_output = true)
 	end
 end
 end

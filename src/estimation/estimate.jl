@@ -33,14 +33,17 @@ function estimate(model::ModelingToolkit.ODESystem,
 	method = :homotopy, solver = Vern9(),
 	report_time = minimum(data_sample["t"]),
 	interpolators = nothing, real_tol = 1e-14,
-	threaded = Threads.nthreads() > 1, filtermode = :new, parameter_constraints = nothing, ic_constraints = nothing) where {T <: Float}
-
+	threaded = Threads.nthreads() > 1, filtermode = :new, parameter_constraints = nothing, ic_constraints = nothing, disable_output = false) where {T <: Float}
+	if (disable_output)
+		logger = NullLogger()
+		old_logger = global_logger(logger)
+	end
 	#println("DEBUG")
 	if !(method in [:homotopy, :msolve])
 		throw(ArgumentError("Method $method is not supported, must be one of :homotopy or :msolve."))
 	end
 	if threaded
-		result = estimate_threaded(model, measured_quantities, inputs, data_sample;  
+		result = estimate_threaded(model, measured_quantities, inputs, data_sample;
 			at_time = at_time, solver = solver,
 			interpolators = interpolators,
 			method = method,
@@ -53,9 +56,14 @@ function estimate(model::ModelingToolkit.ODESystem,
 			interpolators = interpolators, method = method,
 			real_tol = real_tol, filtermode, parameter_constraints = parameter_constraints, ic_constraints = ic_constraints)
 	end
-	println("Final Results:")
-	for each in result
-		display(each)
+	if (!disable_output)
+		println("Final Results:")
+		for each in result
+			display(each)
+		end
+	end
+	if (disable_output)
+		global_logger(old_logger)
 	end
 	return result
 end
