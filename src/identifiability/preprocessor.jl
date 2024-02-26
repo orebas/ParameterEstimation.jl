@@ -8,7 +8,7 @@ Input:
 Output:
 - `ODE` object containing required data for identifiability assessment
 """
-function preprocess_ode(de::ModelingToolkit.ODESystem,
+ function preprocess_ode(de::ModelingToolkit.ODESystem,
                         measured_quantities::Array{ModelingToolkit.Equation},
                         inputs = Vector{Num}())
     @info "Preproccessing `ModelingToolkit.ODESystem` object"

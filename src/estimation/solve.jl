@@ -5,6 +5,9 @@ function solve_via_homotopy(identifiability_result, model; real_tol = 1e-12)
 	state_param_map = merge(Dict(replace(string(x), "(t)" => "") => x
 								 for x in ModelingToolkit.states(model)),
 		Dict(string(x) => x for x in ModelingToolkit.parameters(model)))
+	println(typeof(polynomial_system))
+	println(polynomial_system)
+
 	results = HomotopyContinuation.solve(polynomial_system; show_progress = false)
 	all_solutions = HomotopyContinuation.real_solutions(results)
 	if length(all_solutions) == 0

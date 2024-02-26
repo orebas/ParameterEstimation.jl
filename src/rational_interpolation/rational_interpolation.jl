@@ -46,6 +46,9 @@ function interpolate(identifiability_result, data_sample,
 		polynomial_system = eval_derivs(polynomial_system, interpolant, y_function_name,
 			inputs, identifiability_result, at_time = at_t, method = method)
 	end
+	println("in rational_interpolation.jl line 49")
+	println(typeof(polynomial_system))
+	println(polynomial_system)
 	if isequal(method, :homotopy)
 		try
 			identifiability_result["polynomial_system_to_solve"] = HomotopyContinuation.System(polynomial_system)
