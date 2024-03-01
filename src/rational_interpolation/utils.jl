@@ -8,7 +8,7 @@
 This function evaluates the derivatives of the interpolated function `y_function_name` using the `interpolant` object.
 	Derivatives are substituted into the polynomial system.
 """
-function eval_derivs(polynomial_system, interpolant::Interpolant,
+function eval_derivs!(polynomial_system, interpolant::Interpolant,
 	y_function_name,
 	inputs::Vector{ModelingToolkit.Equation},
 	identifiability_result;

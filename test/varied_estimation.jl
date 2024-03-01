@@ -540,7 +540,12 @@ function analyze_parameter_estimation_problem(PEP::ParameterEstimationProblem; t
         #println("TYPE: ", typeof(each))
         #println(each)
         estimates = vcat(collect(values(each.states)), collect(values(each.parameters)))
-        besterror = min(besterror, maximum(abs.((estimates .- all_params) ./ (all_params))))
+        errorvec = abs.((estimates .- all_params) ./ (all_params))
+        if (PEP.Name == "BioHydrogenation")
+            sort!(errorvec)
+            pop!(errorvec)
+        end
+        besterror = min(besterror, maximum(errorvec))
     end
     if (test_mode)
 		@test besterror < 1e-2
@@ -569,17 +574,17 @@ function varied_estimation_main()
         simple(datasize, time_interval, solver),  #works
         lotka_volterra(datasize, time_interval, solver),  #works
         vanderpol(datasize, time_interval, solver),  #works
-        #biohydrogenation(datasize, time_interval, solver),  #works, but one param unidentifiable
-        #daisy_ex3(datasize, time_interval, solver),
+        biohydrogenation(datasize, time_interval, solver),  #works, but one param unidentifiable
+        daisy_ex3(datasize, time_interval, Tsit5()),  #Vern9() gives a weird error here.  ideally isolate it and create an issue
         daisy_mamil3(datasize, time_interval, solver),
         daisy_mamil4(datasize, time_interval, solver),
-        #fitzhugh_nagumo(datasize, time_interval, solver),
-        #hiv_local(datasize, time_interval, solver),
+        fitzhugh_nagumo(datasize, time_interval, solver),
+        #hiv_local(datasize, time_interval, solver),  #TODO check:  no solutions found?
         hiv(datasize, time_interval, solver),
         seir(datasize, time_interval, solver),
-        #sirsforced(datasize, time_interval, Rodas5P()),
+        sirsforced(datasize, time_interval, Rodas5P()),   #TODO check:  no solutions found?
         slowfast(datasize, time_interval, solver),
-        #treatment(datasize, time_interval, Rodas5P()),
+        treatment(datasize, time_interval, Rodas5P()),   #TODO check:  no solutions found?
         crauste(datasize, time_interval, solver),
     ]
         analyze_parameter_estimation_problem(PEP, test_mode=true)

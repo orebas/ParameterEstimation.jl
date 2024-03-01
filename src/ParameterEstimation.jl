@@ -15,12 +15,14 @@ using Suppressor
 
 using ProgressMeter, Logging, Printf
 using ModelingToolkit, LinearSolve, LinearAlgebra
-using HomotopyContinuation, Groebner, Oscar
+using HomotopyContinuation
+using Oscar
+using Groebner, Oscar
 using .ReturnCode
 #import StructuralIdentifiability: eval_at_nemo, ODE
 using BaryRational
 using ForwardDiff
-using ArbNumerics
+#using ArbNumerics
 using Nemo
 
 #end
@@ -60,6 +62,7 @@ export check_identifiability, estimate, filter_solutions
 		res = ParameterEstimation.estimate(model, measured_quantities, data_sample, disable_output = true)
 	end
 end
+
 
 end
 

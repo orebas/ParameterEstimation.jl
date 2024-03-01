@@ -410,6 +410,12 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, infolev
 			"basis" => gb,
 			"weights" => weights,
 			"non_jet_ring" => non_jet_ring)
+			#######OB1###
+			
+			#display("check_identifiability.jl line 413")
+			#display(typeof(full_result["polynomial_system"]))
+			#display((full_result["polynomial_system"]))
+			
 		return full_result
 	end
 end
