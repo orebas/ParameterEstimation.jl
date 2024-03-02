@@ -8,7 +8,7 @@ function solve_via_homotopy(identifiability_result, model; real_tol = 1e-12)
 	println(typeof(polynomial_system))
 	println(polynomial_system)
 
-	results = HomotopyContinuation.solve(polynomial_system; show_progress = true)  #TODO change from true to false
+	results = HomotopyContinuation.solve(polynomial_system; show_progress = true, threaded=true)  #TODO change from true to false
 
 	all_solutions = HomotopyContinuation.real_solutions(results)
 	display("solve.jl line 13")
@@ -37,7 +37,14 @@ function solve_via_homotopy(identifiability_result, model; real_tol = 1e-12)
 		end
 		for (key, val) in identifiability_result.transcendence_basis_subs
 			if endswith(string(key), "_0")
-				tmp[state_param_map[string(key)[1:(end-2)]]] = Int(Meta.parse("$val"))
+				
+				display("solve.jl line 40")
+				display(key)
+				display("$val")
+				display(typeof("$val"))
+				display(val)
+				display(typeof(val))
+				tmp[state_param_map[string(key)[1:(end-2)]]] = (parse(BigInt,"$val"))
 			end
 		end
 		push!(all_solutions_, tmp)

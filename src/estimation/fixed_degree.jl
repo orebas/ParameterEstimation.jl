@@ -1,3 +1,8 @@
+function convert(::Type{Union{Float64, ComplexF64}}, x::Int64)
+	return convert(Float64,x)
+end
+
+
 """
 	backsolve_initial_conditions(model, 
 		E, report_time, inputs::Vector{Equation}, data_sample;
@@ -9,7 +14,7 @@
 		Given a set of estimated state variables at E.at_time, solves ODE backwards to estimate state variables at report_time.  In most cases tspan will be backwards.
 		"""
 function backsolve_initial_conditions(model, E, report_time, inputs::Vector{Equation}, data_sample;
-	solver = Vern9(), abstol = 1e-14, reltol = 1e-14)
+	solver , abstol = 1e-14, reltol = 1e-14)
 	initial_conditions = [E[s] for s in ModelingToolkit.states(model)]
 	parameter_values = [E[p] for p in ModelingToolkit.parameters(model)]
 	tspan = (E.at_time, report_time)  #this is almost always backwards!
@@ -22,6 +27,12 @@ function backsolve_initial_conditions(model, E, report_time, inputs::Vector{Equa
 		ModelingToolkit.parameters(model))
 	prob = ODEProblem(new_model, initial_conditions, tspan, parameter_values)
 	saveat = range(tspan[1], tspan[2], length = length(data_sample["t"]))
+    display("backsolve_initial_conditions")
+	display(parameter_values)
+	display(prob)
+	display(saveat)
+	parameter_values = Base.convert(Array{ComplexF64,1}, parameter_values)
+	display(parameter_values)
 
 	ode_solution = ModelingToolkit.solve(prob, solver, p = parameter_values, saveat = saveat, abstol = abstol, reltol = reltol)
 
@@ -80,7 +91,7 @@ measured quantities `measured_quantities`.
 """
 function estimate_single_interpolator(model::ModelingToolkit.ODESystem,
 	measured_quantities::Vector{ModelingToolkit.Equation},
-	inputs::Vector{ModelingToolkit.Equation},
+	inputs::Vector{ModelingToolkit.Equation}, solver,
 	data_sample::AbstractDict{Any, Vector{T}} = Dict{Any,
 		Vector{T}}();
 	identifiability_result = Dict{String, Any}(),
@@ -123,7 +134,7 @@ function estimate_single_interpolator(model::ModelingToolkit.ODESystem,
 		interpolants, ReturnCode.Success, datasize, report_time)
 					 for each in all_solutions]
 
-	all_solutions_R = [backsolve_initial_conditions(model, each, report_time, inputs, data_sample)
+	all_solutions_R = [backsolve_initial_conditions(model, each, report_time, inputs, data_sample, solver=solver)
 					   for each in all_solutions]
 
 
