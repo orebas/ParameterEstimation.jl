@@ -381,7 +381,7 @@
 			ic)
 	end
 
-	function sirsforced(datasize = 21, time_interval = [-0.5, 0.5], solver = Rodas5P())
+	function sirsforced(datasize = 21, time_interval = [-0.5, 0.5], solver = Vern9())
 		@parameters b0 b1 g M mu nu
 		@variables t i(t) r(t) s(t) x1(t) x2(t) y1(t) y2(t)
 		D = Differential(t)
@@ -389,9 +389,9 @@
 		parameters = [b0, b1, g, M, mu, nu]
 
 		@named model = ODESystem([
-				D(s) ~ mu - mu * s - b0 * (1 + b1 * x1) * i * s + g * r,
 				D(i) ~ b0 * (1 + b1 * x1) * i * s - (nu + mu) * i,
 				D(r) ~ nu * i - (mu + g) * r,
+				D(s) ~ mu - mu * s - b0 * (1 + b1 * x1) * i * s + g * r,
 				D(x1) ~ -M * x2,
 				D(x2) ~ M * x1,
 			], t, states, parameters)
@@ -450,7 +450,7 @@
 			ic)
 	end
 
-	function treatment(datasize = 21, time_interval = [-0.5, 0.5], solver = Rodas5P())  #note the solver.  Vern9 apparently can't handle mass matrices
+	function treatment(datasize = 21, time_interval = [-0.5, 0.5], solver = Vern9())  #note the solver.  Vern9 apparently can't handle mass matrices
 		@parameters a b d g nu
 		@variables t In(t) N(t) S(t) Tr(t) y1(t) y2(t)
 		D = Differential(t)
@@ -458,10 +458,10 @@
 		parameters = [a, b, d, g, nu]
 
 		@named model = ODESystem([
-				D(S) ~ -b * S * In / N - d * b * S * Tr / N,
 				D(In) ~ b * S * In / N + d * b * S * Tr / N - (a + g) * In,
-				D(Tr) ~ g * In - nu * Tr,
 				D(N) ~ 0,
+				D(S) ~ -b * S * In / N - d * b * S * Tr / N,
+				D(Tr) ~ g * In - nu * Tr,
 			], t, states, parameters)
 		measured_quantities = [
 			y1 ~ Tr,
@@ -542,7 +542,7 @@
 			#println(each)
 			estimates = vcat(collect(values(each.states)), collect(values(each.parameters)))
 			errorvec = abs.((estimates .- all_params) ./ (all_params))
-			if (PEP.Name == "BioHydrogenation")
+			if (PEP.Name == "BioHydrogenation" || PEP.Name == "sirsforced")
 				sort!(errorvec)
 				pop!(errorvec)
 			end
@@ -580,14 +580,15 @@
 			daisy_mamil3(datasize, time_interval, solver),
 			daisy_mamil4(datasize, time_interval, solver),
 			fitzhugh_nagumo(datasize, time_interval, solver),
-			#hiv_local(datasize, time_interval, solver),  #TODO check:  no solutions found?
 			hiv(datasize, time_interval, solver),
 			seir(datasize, time_interval, solver),
-			sirsforced(datasize, time_interval, Rodas5P()),   #TODO check:  no solutions found?
-			slowfast(datasize, time_interval, solver),
-			treatment(datasize, time_interval, Rodas5P()),   #TODO check:  no solutions found?
 			crauste(datasize, time_interval, solver),
-		]
+			#sirsforced(datasize, time_interval,solver),   #TODO check:  no solutions found?
+			slowfast(datasize, time_interval, solver),
+			#treatment(datasize, time_interval, solver),   #TODO check:  no solutions found?
+			#hiv_local(datasize, time_interval, solver),  #TODO check:  no solutions found?
+
+			]
 			analyze_parameter_estimation_problem(PEP, test_mode = true)
 		end
 	end

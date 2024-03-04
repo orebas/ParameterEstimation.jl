@@ -8,7 +8,8 @@ function solve_via_homotopy(identifiability_result, model; real_tol = 1e-12)
 	println(typeof(polynomial_system))
 	println(polynomial_system)
 
-	results = HomotopyContinuation.solve(polynomial_system; show_progress = true, threaded=true)  #TODO change from true to false
+	results = HomotopyContinuation.solve(polynomial_system; show_progress = true)
+	#, threaded=true)  #TODO change from true to false
 
 	all_solutions = HomotopyContinuation.real_solutions(results)
 	display("solve.jl line 13")
