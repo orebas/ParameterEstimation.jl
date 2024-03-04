@@ -8,13 +8,22 @@ function solve_via_homotopy(identifiability_result, model; real_tol = 1e-12)
 	println(typeof(polynomial_system))
 	println(polynomial_system)
 
-	results = HomotopyContinuation.solve(polynomial_system; show_progress = false)
+	results = HomotopyContinuation.solve(polynomial_system; show_progress = true)  #TODO change from true to false
+
 	all_solutions = HomotopyContinuation.real_solutions(results)
+	display("solve.jl line 13")
+	display(length(all_solutions))
+	display(results)
+	display(HomotopyContinuation.solutions(results))
 	if length(all_solutions) == 0
 		all_solutions = HomotopyContinuation.solutions(results)
 		if length(all_solutions) == 0
-			@debug "Interpolation numerator degree $(interpolation_degree): No solutions found"
-			return Vector{EstimationResult}()
+			all_solutions = HomotopyContinuation.solutions(results; only_nonsingular = false)
+			if length(all_solutions) == 0
+
+				@debug "Interpolation numerator degree $(interpolation_degree): No solutions found"
+				return Vector{EstimationResult}()
+			end
 		end
 	end
 	all_solutions_ = Vector{Dict}([])
