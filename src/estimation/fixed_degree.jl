@@ -1,5 +1,5 @@
 function convert(::Type{Union{Float64, ComplexF64}}, x::Int64)
-    return convert(Type{Union{Float64, ComplexF64}},Base.convert(Float64, x))
+	return convert(Type{Union{Float64, ComplexF64}}, Base.convert(Float64, x))
 end
 
 """
@@ -13,54 +13,48 @@ end
 		Given a set of estimated state variables at E.at_time, solves ODE backwards to estimate state variables at report_time.  In most cases tspan will be backwards.
 		"""
 function backsolve_initial_conditions(
-        model, E, report_time, inputs::Vector{Equation}, data_sample;
-        solver, abstol = 1e-14, reltol = 1e-14)
-    initial_conditions = [E[s] for s in ModelingToolkit.states(model)]
-    parameter_values = [E[p] for p in ModelingToolkit.parameters(model)]
-    tspan = (E.at_time, report_time)  #this is almost always backwards!
+	model, E, report_time, inputs::Vector{Equation}, data_sample;
+	solver, abstol = 1e-14, reltol = 1e-14)
+	initial_conditions = [E[s] for s in ModelingToolkit.states(model)]
+	parameter_values = [E[p] for p in ModelingToolkit.parameters(model)]
+	tspan = (E.at_time, report_time)  #this is almost always backwards!
 
-    ode_equations = ModelingToolkit.equations(model)
-    ode_equations = substitute(ode_equations,
-        Dict(each.lhs => Num(each.rhs) for each in inputs))
-    t = ModelingToolkit.get_iv(model)
-    @named new_model = ODESystem(ode_equations, t, ModelingToolkit.states(model),
-        ModelingToolkit.parameters(model))
-    display("backsolve_initial_conditions.")
-    display(parameter_values)
+	ode_equations = ModelingToolkit.equations(model)
+	ode_equations = substitute(ode_equations,
+		Dict(each.lhs => Num(each.rhs) for each in inputs))
+	t = ModelingToolkit.get_iv(model)
+	@named new_model = ODESystem(ode_equations, t, ModelingToolkit.states(model),
+		ModelingToolkit.parameters(model))
 
-    
+
 	initial_conditions = Base.convert(Array{ComplexF64, 1}, initial_conditions)
-    if (isreal(initial_conditions))
-        initial_conditions = Base.convert(Array{Float64, 1}, initial_conditions)
-    end
+	if (isreal(initial_conditions))
+		initial_conditions = Base.convert(Array{Float64, 1}, initial_conditions)
+	end
 
-	
+
 	parameter_values = Base.convert(Array{ComplexF64, 1}, parameter_values)
-    if (isreal(parameter_values))
-        parameter_values = Base.convert(Array{Float64, 1}, parameter_values)
-    end
-    prob = ODEProblem(new_model, initial_conditions, tspan, parameter_values)
-    saveat = range(tspan[1], tspan[2], length = length(data_sample["t"]))
+	if (isreal(parameter_values))
+		parameter_values = Base.convert(Array{Float64, 1}, parameter_values)
+	end
+	prob = ODEProblem(new_model, initial_conditions, tspan, parameter_values)
+	saveat = range(tspan[1], tspan[2], length = length(data_sample["t"]))
 
-    display(parameter_values)
-    display(prob)
-    display(saveat)
+	ode_solution = ModelingToolkit.solve(prob, solver, p = parameter_values,
+		saveat = saveat, abstol = abstol, reltol = reltol)
 
-    ode_solution = ModelingToolkit.solve(prob, solver, p = parameter_values,
-        saveat = saveat, abstol = abstol, reltol = reltol)
+	state_param_map = (Dict(x => replace(string(x), "(t)" => "")
+							for x in ModelingToolkit.states(model)))
 
-    state_param_map = (Dict(x => replace(string(x), "(t)" => "")
-    for x in ModelingToolkit.states(model)))
+	newstates = copy(E.states)
 
-    newstates = copy(E.states)
-
-    for s in ModelingToolkit.states(model)
-        temp = ode_solution[Symbol(state_param_map[s])][end]
-        newstates[s] = temp
-    end
-    ER = EstimationResult(E.parameters, newstates, E.degree, report_time,
-        E.err, E.interpolants, E.return_code, E.datasize, report_time)
-    return ER
+	for s in ModelingToolkit.states(model)
+		temp = ode_solution[Symbol(state_param_map[s])][end]
+		newstates[s] = temp
+	end
+	ER = EstimationResult(E.parameters, newstates, E.degree, report_time,
+		E.err, E.interpolants, E.return_code, E.datasize, report_time)
+	return ER
 end
 
 """
@@ -96,53 +90,53 @@ measured quantities `measured_quantities`.
 - `EstimationResult`: the estimated parameters and initial conditions of the model.
 """
 function estimate_single_interpolator(model::ModelingToolkit.ODESystem,
-        measured_quantities::Vector{ModelingToolkit.Equation},
-        inputs::Vector{ModelingToolkit.Equation}, solver,
-        data_sample::AbstractDict{Any, Vector{T}} = Dict{Any,
-            Vector{T}}();
-        identifiability_result = Dict{String, Any}(),
-        interpolator = ("AAA" => aaad),
-        at_time::T, report_time = minimum(data_sample["t"]),
-        method = :homotopy,
-        real_tol = 1e-14) where {T <: Float}
-    time_interval = [minimum(data_sample["t"]), maximum(data_sample["t"])]  #TODO(orebas) will this break if key is missing?
+	measured_quantities::Vector{ModelingToolkit.Equation},
+	inputs::Vector{ModelingToolkit.Equation}, solver,
+	data_sample::AbstractDict{Any, Vector{T}} = Dict{Any,
+		Vector{T}}();
+	identifiability_result = Dict{String, Any}(),
+	interpolator = ("AAA" => aaad),
+	at_time::T, report_time = minimum(data_sample["t"]),
+	method = :homotopy,
+	real_tol = 1e-14) where {T <: Float}
+	time_interval = [minimum(data_sample["t"]), maximum(data_sample["t"])]  #TODO(orebas) will this break if key is missing?
 
-    check_inputs(measured_quantities, data_sample)  #TODO(orebas): I took out checking the degree.  Do we want to check the interpolator otherwise?
-    datasize = length(first(values(data_sample)))
-    parameters = ModelingToolkit.parameters(model)
-    states = ModelingToolkit.states(model)
-    num_parameters = length(parameters) + length(states)
-    @debug "Interpolating sample data via interpolation method $(interpolator.first)"
-    if !haskey(data_sample, "t")
-        @warn "No sampling time points found in data sample. Assuming uniform sampling t ∈ [$(time_interval[1]), $(time_interval[2])]."
-        data_sample["t"] = range(time_interval[1], time_interval[2], length = datasize)
-    end
-    interpolants = ParameterEstimation.interpolate(identifiability_result,
-        data_sample, measured_quantities, inputs;
-        interpolator = interpolator,
-        diff_order = num_parameters + 1,   #todo(OREBAS): is this always forcing num_parameters + 1 derivatives?
-        at_t = at_time,
-        method = method)
+	check_inputs(measured_quantities, data_sample)  #TODO(orebas): I took out checking the degree.  Do we want to check the interpolator otherwise?
+	datasize = length(first(values(data_sample)))
+	parameters = ModelingToolkit.parameters(model)
+	states = ModelingToolkit.states(model)
+	num_parameters = length(parameters) + length(states)
+	@debug "Interpolating sample data via interpolation method $(interpolator.first)"
+	if !haskey(data_sample, "t")
+		@warn "No sampling time points found in data sample. Assuming uniform sampling t ∈ [$(time_interval[1]), $(time_interval[2])]."
+		data_sample["t"] = range(time_interval[1], time_interval[2], length = datasize)
+	end
+	interpolants = ParameterEstimation.interpolate(identifiability_result,
+		data_sample, measured_quantities, inputs;
+		interpolator = interpolator,
+		diff_order = num_parameters + 1,   #todo(OREBAS): is this always forcing num_parameters + 1 derivatives?
+		at_t = at_time,
+		method = method)
 
-    if method == :homotopy
-        all_solutions = solve_via_homotopy(identifiability_result, model;
-            real_tol = real_tol)
-    elseif method == :msolve
-        all_solutions = solve_via_msolve(identifiability_result, model;
-            real_tol = real_tol)
-    else
-        throw(ArgumentError("Method $method not supported"))
-    end
-    #println(all_solutions)
-    #println("HERE")
-    all_solutions = [EstimationResult(model, each, interpolator.first, at_time,
-                         interpolants, ReturnCode.Success, datasize, report_time)
-                     for each in all_solutions]
+	if method == :homotopy
+		all_solutions = solve_via_homotopy(identifiability_result, model;
+			real_tol = real_tol)
+	elseif method == :msolve
+		all_solutions = solve_via_msolve(identifiability_result, model;
+			real_tol = real_tol)
+	else
+		throw(ArgumentError("Method $method not supported"))
+	end
+	#println(all_solutions)
+	#println("HERE")
+	all_solutions = [EstimationResult(model, each, interpolator.first, at_time,
+		interpolants, ReturnCode.Success, datasize, report_time)
+					 for each in all_solutions]
 
-    all_solutions_R = [backsolve_initial_conditions(
-                           model, each, report_time, inputs, data_sample, solver = solver)
-                       for each in all_solutions]
+	all_solutions_R = [backsolve_initial_conditions(
+		model, each, report_time, inputs, data_sample, solver = solver)
+					   for each in all_solutions]
 
-    #println(all_solutions_R)
-    return all_solutions_R
+	#println(all_solutions_R)
+	return all_solutions_R
 end

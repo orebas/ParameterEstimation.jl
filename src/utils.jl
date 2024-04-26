@@ -63,7 +63,7 @@ function nemo2hc(expr_tree::Number)
 	return expr_tree
 end
 
-function nemo2hc(expr_tree::Oscar.Generic.Frac)
+function nemo2hc(expr_tree::Nemo.Generic.Frac)
 	#println("Frac")
 	numer, denom = Oscar.numerator(expr_tree), Oscar.denominator(expr_tree)
 	return nemo2hc(numer) / nemo2hc(denom)

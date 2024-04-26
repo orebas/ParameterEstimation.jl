@@ -16,8 +16,8 @@ using Suppressor
 using ProgressMeter, Logging, Printf
 using ModelingToolkit, LinearSolve, LinearAlgebra
 using HomotopyContinuation
-using Oscar
-using Groebner, Oscar
+#using Oscar
+using Groebner  #, Oscar
 using .ReturnCode
 #import StructuralIdentifiability: eval_at_nemo, ODE
 using BaryRational
@@ -57,7 +57,7 @@ export check_identifiability, estimate, filter_solutions
 		p_true = [2.0, 3.0, 4.0, 5.0]
 		time_interval = [-4.0, 4.0]
 		datasize = 9
-		data_sample = ParameterEstimation.sample_data(model, measured_quantities, time_interval,
+		data_sample = ParameterEstimation.sample_data(complete(model), measured_quantities, time_interval,
 			p_true, ic, datasize;)
 		res = ParameterEstimation.estimate(model, measured_quantities, data_sample, disable_output = true)
 	end
