@@ -40,102 +40,66 @@ function make_substitution(
 end
 
 function eval_at_nemo(e::Num, vals::Dict)
-    e = Symbolics.value(e)
-    return eval_at_nemo(e, vals)
+	e = Symbolics.value(e)
+	return eval_at_nemo(e, vals)
 end
 
 function eval_at_nemo(e::SymbolicUtils.BasicSymbolic, vals::Dict)
-    if Symbolics.istree(e)
-        # checking if it is a function of the form x(t), a bit dirty
-        if length(Symbolics.arguments(e)) == 1 && "$(first(Symbolics.arguments(e)))" == "t"
-            return vals[e]
-        end
-        # checking if this is a vector entry like x(t)[1]
-        if Symbolics.operation(e) == getindex
-            return vals[e]
-        end
-        # otherwise, this is a term
-        args = map(a -> eval_at_nemo(a, vals), Symbolics.arguments(e))
-        if Symbolics.operation(e) in (+, -, *)
-            return Symbolics.operation(e)(args...)
-        elseif isequal(Symbolics.operation(e), /)
-            return //(args...)
-        elseif isequal(Symbolics.operation(e), ^)
-            if args[2] >= 0
-                return args[1]^args[2]
-            end
-            return 1 // args[1]^(-args[2])
-        end
-        throw(Base.ArgumentError("Function $(Symbolics.operation(e)) is not supported"))
-    elseif e isa Symbolics.Symbolic
-        return get(vals, e, e)
-    end
+	if Symbolics.istree(e)
+		# checking if it is a function of the form x(t), a bit dirty
+		if length(Symbolics.arguments(e)) == 1 && "$(first(Symbolics.arguments(e)))" == "t"
+			return vals[e]
+		end
+		# checking if this is a vector entry like x(t)[1]
+		if Symbolics.operation(e) == getindex
+			return vals[e]
+		end
+		# otherwise, this is a term
+		args = map(a -> eval_at_nemo(a, vals), Symbolics.arguments(e))
+		if Symbolics.operation(e) in (+, -, *)
+			return Symbolics.operation(e)(args...)
+		elseif isequal(Symbolics.operation(e), /)
+			return //(args...)
+		elseif isequal(Symbolics.operation(e), ^)
+			if args[2] >= 0
+				return args[1]^args[2]
+			end
+			return 1 // args[1]^(-args[2])
+		end
+		throw(Base.ArgumentError("Function $(Symbolics.operation(e)) is not supported"))
+	elseif e isa Symbolics.Symbolic
+		return get(vals, e, e)
+	end
 end
 
 function eval_at_nemo(e::Union{Integer, Rational}, vals::Dict)
-    return e
+	return e
 end
+
+
+
+
+
+
 
 function eval_at_nemo(e::Union{Float16, Float32, Float64}, vals::Dict)
-    if isequal(e % 1, 0)
-        out = Int(e)
-    else
-        out = rationalize(e)
-    end
-    @warn "Floating point value $e will be converted to $(out)."
-    return out
-end
-"""
-The main structure that represents input ODE system.
-
-Stores information about states (`x_vars`), outputs (`y_vars`), inputs (`u_vars`), parameters (`parameters`) and the equations.
-
-This structure is constructed via `@ODEmodel` macro.
-"""
-struct ODE{P} # P is the type of polynomials in the rhs of the ODE system
-	poly_ring::MPolyRing
-	x_vars::Array{P, 1}
-	y_vars::Array{P, 1}
-	u_vars::Array{P, 1}
-	parameters::Array{P, 1}
-	x_equations::Dict{P, <:Union{P, Generic.Frac{P}}}
-	y_equations::Dict{P, <:Union{P, Generic.Frac{P}}}
-
-	function ODE{P}(
-		x_vars::Array{P, 1},
-		y_vars::Array{P, 1},
-		x_eqs::Dict{P, <:Union{P, Generic.Frac{P}}},
-		y_eqs::Dict{P, <:Union{P, Generic.Frac{P}}},
-		inputs::Array{P, 1},
-	) where {P <: MPolyRingElem{<:FieldElem}}
-		# Initialize ODE
-		# x_eqs is a dictionary x_i => f_i(x, u, params)
-		# y_eqs is a dictionary y_i => g_i(x, u, params)
-		if isempty(y_eqs)
-			@info "Could not find output variables in the model."
-		end
-		poly_ring = parent(first(vcat(y_vars, x_vars)))
-		u_vars = inputs
-		parameters = filter(
-			v -> (!(v in x_vars) && !(v in u_vars) && !(v in y_vars)),
-			gens(poly_ring),
-		)
-		new{P}(poly_ring, x_vars, y_vars, u_vars, parameters, x_eqs, y_eqs)
+	if isequal(e % 1, 0)
+		out = Int(e)
+	else
+		out = rationalize(e)
 	end
-
-	function ODE{P}(
-		x_eqs::Dict{P, <:Union{P, Generic.Frac{P}}},
-		y_eqs::Dict{P, <:Union{P, Generic.Frac{P}}},
-		inputs::Array{P, 1},
-	) where {P <: MPolyRingElem{<:FieldElem}}
-		x_vars = collect(keys(x_eqs))
-		y_vars = collect(keys(y_eqs))
-		return ODE{P}(x_vars, y_vars, x_eqs, y_eqs, inputs)
-	end
+	@warn "Floating point value $e will be converted to $(out)."
+	return out
 end
 
 
-########################################################################################
+
+
+
+
+
+
+
 
 
 """
@@ -149,15 +113,6 @@ function str_to_var(s, ring::MPolyRing)
 		throw(Base.KeyError("Variable $s is not found in ring $ring"))
 	end
 	return gens(ring)[ind]
-end
-
-function unpack_fraction(f::Generic.Frac{<:MPolyElem})
-	return (numerator(f), denominator(f))
-end
-
-# ----------
-function unpack_fraction(f::MPolyElem)
-	return (f, one(parent(f)))
 end
 
 
@@ -198,7 +153,8 @@ appearing in poly appears among the generators
 ## Output
 -  a polynomial in new_ring "equal" to `poly`
 """
-function add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
+
+function add_zero_to_vars(poly::MPolyRingElem, new_ring::MPolyRing)
 	old_ring = parent(poly)
 	# construct a mapping for the variable indices
 	var_mapping = Array{Any, 1}()
@@ -261,7 +217,7 @@ end
 
 Reduces a polynomial modulo p.
 """
-function _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
+function _reduce_poly_mod_p(poly::MPolyRingElem{fmpq}, p::Int)
 	"""
 	Reduces a polynomial over Q modulo p
 	"""
@@ -607,4 +563,74 @@ function get_weights(ode, non_identifiable_parameters)
 	end
 	weights[z_aux] = min(3, max_level)
 	return weights
+end
+
+
+
+
+"""
+The main structure that represents input ODE system.
+
+Stores information about states (`x_vars`), outputs (`y_vars`), inputs (`u_vars`), parameters (`parameters`) and the equations.
+
+This structure is constructed via `@ODEmodel` macro.
+"""
+struct ODE{P} # P is the type of polynomials in the rhs of the ODE system
+	poly_ring::MPolyRing
+	x_vars::Array{P, 1}
+	y_vars::Array{P, 1}
+	u_vars::Array{P, 1}
+	parameters::Array{P, 1}
+	x_equations::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}}
+	y_equations::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}}
+
+	function ODE{P}(
+		x_vars::Array{P, 1},
+		y_vars::Array{P, 1},
+		x_eqs::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}},
+		y_eqs::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}},
+		inputs::Array{P, 1},
+	) where {P <: MPolyRingElem{<:FieldElem}}
+		# Initialize ODE
+		# x_eqs is a dictionary x_i => f_i(x, u, params)
+		# y_eqs is a dictionary y_i => g_i(x, u, params)
+		if isempty(y_eqs)
+			@info "Could not find output variables in the model."
+		end
+		poly_ring = parent(first(vcat(y_vars, x_vars)))
+		u_vars = inputs
+		parameters = filter(
+			v -> (!(v in x_vars) && !(v in u_vars) && !(v in y_vars)),
+			gens(poly_ring),
+		)
+		new{P}(poly_ring, x_vars, y_vars, u_vars, parameters, x_eqs, y_eqs)
+	end
+
+	function ODE{P}(
+		x_eqs::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}},
+		y_eqs::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}},
+		inputs::Array{P, 1},
+	) where {P <: MPolyRingElem{<:FieldElem}}
+		x_vars = collect(keys(x_eqs))
+		y_vars = collect(keys(y_eqs))
+		return ODE{P}(x_vars, y_vars, x_eqs, y_eqs, inputs)
+	end
+end
+
+
+########################################################################################
+
+
+
+
+
+
+
+function unpack_fraction(f::AbstractAlgebra.Generic.Frac{<:AbstractAlgebra.MPolyElem})
+	return (numerator(f), denominator(f))
+end
+
+# ----------
+function unpack_fraction(f::AbstractAlgebra.MPolyElem)
+	return (f, one(parent(f)))
 end

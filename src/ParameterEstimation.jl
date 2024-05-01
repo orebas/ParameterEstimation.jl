@@ -23,6 +23,8 @@ using .ReturnCode
 using BaryRational
 using ForwardDiff
 #using ArbNumerics
+using AbstractAlgebra
+
 using Nemo
 
 #end
@@ -30,7 +32,7 @@ Float = Union{Float64, Float32, Float16, BigFloat}
 include("includes.jl")
 
 export check_identifiability, estimate, filter_solutions
-
+#=
 @recompile_invalidations begin
 	@compile_workload begin
 
@@ -62,7 +64,7 @@ export check_identifiability, estimate, filter_solutions
 		res = ParameterEstimation.estimate(model, measured_quantities, data_sample, disable_output = true)
 	end
 end
-
+=#
 
 end
 

@@ -1,19 +1,10 @@
 name = "ParameterEstimation"
 uuid = "b4cd1eb8-1e24-11e8-3319-93036a3eb9f3"
-authors = [
-    "Oren Bassik <orebas@yahoo.com>",
-    "Yosef Berman <yberman1@gradcenter.cuny.edu>",
-    "Soo Go <sgo@gradcenter.cuny.edu>",
-    "Hoon Hong <hong@ncsu.edu>",
-    "Ilia Ilmer <iilmer@gradcenter.cuny.edu>",
-    "Alexey Ovchinnikov <aovchinnikov@qc.cuny.edu>",
-    "Christopher Rackauckas <accounts@chrisrackauckas.com>",
-    "Pedro Soto <pedro.soto@maths.ox.ac.uk>",
-    "Chee Yap <cyap@nyu.edu>",
-]
+authors = ["Oren Bassik <orebas@yahoo.com>", "Yosef Berman <yberman1@gradcenter.cuny.edu>", "Soo Go <sgo@gradcenter.cuny.edu>", "Hoon Hong <hong@ncsu.edu>", "Ilia Ilmer <iilmer@gradcenter.cuny.edu>", "Alexey Ovchinnikov <aovchinnikov@qc.cuny.edu>", "Christopher Rackauckas <accounts@chrisrackauckas.com>", "Pedro Soto <pedro.soto@maths.ox.ac.uk>", "Chee Yap <cyap@nyu.edu>"]
 version = "0.3.0"
 
 [deps]
+AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
 ArbNumerics = "7e558dbc-694d-5a72-987c-6f4ebed21442"
 BaryRational = "91aaffc3-5777-4842-85b7-5d3d5d6a3494"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
@@ -26,7 +17,6 @@ Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
 Nemo = "2edaba10-b0f1-5616-af89-8c11ac63239a"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-Oscar = "f1435218-dba5-11e9-1e4d-f1a5fab5fc13"
 PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
@@ -42,12 +32,12 @@ ArbNumerics = "1"
 BaryRational = "1"
 DifferentialEquations = "7"
 ForwardDiff = "0.10"
-Groebner = "0.2, 0.3, 0.4 - 0.5"
+Groebner = "0.2, 0.3, 0.4 - 0.8"
 HomotopyContinuation = "2"
 LinearSolve = "2"
 ModelingToolkit = "8, 9"
+Nemo = "0.42, 0.43"
 OrderedCollections = "1"
-Oscar = "0.10 - 0.20"
 PrecompileTools = "1"
 ProgressMeter = "1"
 Suppressor = "0.2"
