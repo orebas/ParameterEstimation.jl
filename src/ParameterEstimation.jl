@@ -27,6 +27,10 @@ using AbstractAlgebra
 
 using Nemo
 
+
+ExtendedFraction{P} = Union{P, Generic.FracFieldElem{P}}
+
+
 #end
 Float = Union{Float64, Float32, Float16, BigFloat}
 include("includes.jl")

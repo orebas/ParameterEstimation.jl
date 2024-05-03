@@ -3,8 +3,6 @@
 
 
 
-
-
 ################# FUNCTIONS COPED FROM StructuralIdentifiability######################
 
 """
@@ -217,7 +215,7 @@ end
 
 Reduces a polynomial modulo p.
 """
-function _reduce_poly_mod_p(poly::MPolyRingElem{fmpq}, p::Int)
+function _reduce_poly_mod_p(poly::MPolyRingElem{Nemo.QQFieldElem}, p::Int)
 	"""
 	Reduces a polynomial over Q modulo p
 	"""
@@ -274,10 +272,10 @@ function get_equations(ode)
 end
 
 function get_x_eq(x_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, y_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, n::Int, m::Int, s::Int, u::Int, gens_Rjet)
-	X = Array{Nemo.fmpq_poly}(undef, 0)
-	X_eq = Array{Nemo.fmpq_poly}(undef, 0)
+	X = Array{Nemo.QQPolyRingElem}(undef, 0)
+	X_eq = Array{Nemo.QQPolyRingElem}(undef, 0)
 	for i in 1:n
-		X = vcat(X, [Array{Nemo.fmpq_poly}(undef, 0)])
+		X = vcat(X, [Array{Nemo.QQPolyRingElem}(undef, 0)])
 		poly_d = ParameterEstimation.unpack_fraction(x_eqs[i][1] - x_eqs[i][2])[1]
 		for j in 0:s+1
 			if j > 0
@@ -293,10 +291,10 @@ function get_x_eq(x_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, y_eqs::V
 end
 
 function get_y_eq(x_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, y_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, n::Int, m::Int, s::Int, u::Int, gens_Rjet)
-	Y = Array{Nemo.fmpq_poly}(undef, 0)
-	Y_eq = Array{Nemo.fmpq_poly}(undef, 0)
+	Y = Array{Nemo.QQPolyRingElem}(undef, 0)
+	Y_eq = Array{Nemo.QQPolyRingElem}(undef, 0)
 	for i in 1:m
-		Y = vcat(Y, [Array{Nemo.fmpq_poly}(undef, 0)])
+		Y = vcat(Y, [Array{Nemo.QQPolyRingElem}(undef, 0)])
 		poly_d = unpack_fraction(y_eqs[i][1] - y_eqs[i][2])[1]
 		for j in 0:s+1
 			if j > 0
@@ -312,7 +310,7 @@ function get_y_eq(x_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, y_eqs::V
 end
 
 
-function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
+function parent_ring_change(poly::AbstractAlgebra.MPolyRingElem, new_ring::MPolyRing)
 	old_ring = parent(poly)
 	# construct a mapping for the variable indices
 	var_mapping = Array{Any, 1}()
@@ -567,7 +565,6 @@ end
 
 
 
-
 """
 The main structure that represents input ODE system.
 
@@ -581,14 +578,14 @@ struct ODE{P} # P is the type of polynomials in the rhs of the ODE system
 	y_vars::Array{P, 1}
 	u_vars::Array{P, 1}
 	parameters::Array{P, 1}
-	x_equations::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}}
-	y_equations::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}}
+	x_equations::Dict{P, <:ExtendedFraction{P}}
+	y_equations::Dict{P, <:ExtendedFraction{P}}
 
 	function ODE{P}(
 		x_vars::Array{P, 1},
 		y_vars::Array{P, 1},
-		x_eqs::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}},
-		y_eqs::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}},
+		x_eqs::Dict{P, <:ExtendedFraction{P}},
+		y_eqs::Dict{P, <:ExtendedFraction{P}},
 		inputs::Array{P, 1},
 	) where {P <: MPolyRingElem{<:FieldElem}}
 		# Initialize ODE
@@ -607,8 +604,8 @@ struct ODE{P} # P is the type of polynomials in the rhs of the ODE system
 	end
 
 	function ODE{P}(
-		x_eqs::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}},
-		y_eqs::Dict{P, <:Union{P, Nemo.AbstractAlgebra.Generic.Frac{P}}},
+		x_eqs::Dict{P, <:ExtendedFraction{P}},
+		y_eqs::Dict{P, <:ExtendedFraction{P}},
 		inputs::Array{P, 1},
 	) where {P <: MPolyRingElem{<:FieldElem}}
 		x_vars = collect(keys(x_eqs))
@@ -617,20 +614,20 @@ struct ODE{P} # P is the type of polynomials in the rhs of the ODE system
 	end
 end
 
+function Base.parent(ode::ODE)
+	return ode.poly_ring
+end
+
 
 ########################################################################################
 
 
 
 
-
-
-
-function unpack_fraction(f::AbstractAlgebra.Generic.Frac{<:AbstractAlgebra.MPolyElem})
-	return (numerator(f), denominator(f))
+function unpack_fraction(f::MPolyRingElem)
+	return (f, one(parent(f)))
 end
 
-# ----------
-function unpack_fraction(f::AbstractAlgebra.MPolyElem)
-	return (f, one(parent(f)))
+function unpack_fraction(f::Generic.FracFieldElem{<:MPolyRingElem})
+	return (numerator(f), denominator(f))
 end
