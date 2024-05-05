@@ -235,7 +235,7 @@ Given a list of variables `var_list` and a list of parameters `param_list`, crea
 """
 function create_jet_ring(var_list, param_list, max_ord)
 	varnames = vcat(vec(["$(s)_$i" for s in var_list, i in 0:max_ord]), "z_aux", ["$(s)_0" for s in param_list])
-	return Nemo.PolynomialRing(Nemo.QQ, varnames)[1]
+	return Nemo.polynomial_ring(Nemo.QQ, varnames)[1]
 end
 
 function get_equations(ode)
@@ -308,9 +308,20 @@ function get_y_eq(x_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, y_eqs::V
 	end
 	return Y, Y_eq
 end
+"""
+		func parent_ring_change(poly::MPolyRingElem, new_ring::MPolyRing)
 
+Converts a polynomial to a different polynomial ring.
 
-function parent_ring_change(poly::AbstractAlgebra.MPolyRingElem, new_ring::MPolyRing)
+## Input:
+	- `poly::MPolyRingElem` - a polynomial to be converted
+	- `new_ring::MPolyRing` - a polynomial ring such that every variable name
+		appearing in poly appears among the generators
+
+## Output:
+	- a polynomial in new_ring "equal" to `poly`
+"""
+function parent_ring_change(poly::MPolyRingElem, new_ring::MPolyRing)
 	old_ring = parent(poly)
 	# construct a mapping for the variable indices
 	var_mapping = Array{Any, 1}()
@@ -334,7 +345,7 @@ function parent_ring_change(poly::AbstractAlgebra.MPolyRingElem, new_ring::MPoly
 				end
 			end
 		end
-		if typeof(coef) <: Nemo.fmpq
+		if typeof(coef) <: Nemo.QQFieldElem
 			push_term!(builder, base_ring(new_ring)(coef), new_exp)
 		else
 			push_term!(builder, base_ring(new_ring)(Nemo.data(coef)), new_exp)
@@ -386,12 +397,12 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
 	local u_hat, theta_hat, all_subs
 
 	s = length(all_params)
-	y_hat_vars = Array{fmpq_mpoly}(undef, 0)
-	y_hat_vals = Array{fmpq}(undef, 0)
+	y_hat_vars = Array{QQMPolyRingElem}(undef, 0)
+	y_hat_vals = Array{QQFieldElem}(undef, 0)
 
 	while true
-		theta_hat = replace_random_with_known(all_params, [fmpq(rnd) for rnd in rand(0:bound, s)], known_states_jet_form, known_values)
-		u_hat = replace_random_with_known(u_variables, [fmpq(rnd) for rnd in rand(0:bound, length(u_variables))], known_states_jet_form, known_values)
+		theta_hat = replace_random_with_known(all_params, [QQFieldElem(rnd) for rnd in rand(0:bound, s)], known_states_jet_form, known_values)
+		u_hat = replace_random_with_known(u_variables, [QQFieldElem(rnd) for rnd in rand(0:bound, length(u_variables))], known_states_jet_form, known_values)
 		all_subs = [vcat(all_params, u_variables), vcat(theta_hat, u_hat)]
 		if Nemo.evaluate(Q, all_subs[1], all_subs[2]) == 0
 			continue
@@ -400,7 +411,7 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
 		for i in 0:(s+1)
 			for j in 1:length(y_vars)
 				eq = Y_eq[(j-1)*(s+2)+i+1][2]
-				vl = Oscar.evaluate(unpack_fraction(eq)[1], vls) // Oscar.evaluate(unpack_fraction(eq)[2], vls)
+				vl = Nemo.evaluate(unpack_fraction(eq)[1], vls) // Nemo.evaluate(unpack_fraction(eq)[2], vls)
 				y_hat_vars = vcat(y_hat_vars, Y_eq[(j-1)*(s+2)+i+1][1])
 				y_hat_vals = vcat(y_hat_vals, vl)
 				vls[var_index(Y_eq[(j-1)*(s+2)+i+1][1])] = vl
@@ -408,7 +419,7 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
 			end
 			for j in 1:length(x_vars)
 				eq = X_eq[(j-1)*(s+2)+i+1][2]
-				vl = Oscar.evaluate(unpack_fraction(eq)[1], vls) // Oscar.evaluate(unpack_fraction(eq)[2], vls)
+				vl = Nemo.evaluate(unpack_fraction(eq)[1], vls) // Nemo.evaluate(unpack_fraction(eq)[2], vls)
 				all_subs = [vcat(all_subs[1], X_eq[(j-1)*(s+2)+i+1][1]), vcat(all_subs[2], vl)]
 				vls[var_index(X_eq[(j-1)*(s+2)+i+1][1])] = vl
 			end
@@ -425,7 +436,7 @@ end
 Insert zeros at positions based on the variables' index.
 """
 function insert_zeros_to_vals(var_arr, val_arr)
-	all_val_arr = zeros(fmpq, length(gens(parent(var_arr[1]))))
+	all_val_arr = zeros(QQFieldElem, length(gens(parent(var_arr[1]))))
 	for i in 1:length(var_arr)
 		all_val_arr[var_index(var_arr[i])] = val_arr[i]
 	end
@@ -441,10 +452,10 @@ with respect to variables `vars`.
 The matrix is evaluated at `vals` from a symbolic to numeric representation.
 """
 function jacobi_matrix(pol_arr, vrs, vals)
-	m = Nemo.MatrixSpace(Nemo.QQ, length(pol_arr), length(vrs))()
+	m = Nemo.matrix_space(Nemo.QQ, length(pol_arr), length(vrs))()
 	for i in 1:length(pol_arr)
 		for j in 1:length(vrs)
-			m[i, j] = Oscar.evaluate(derivative(pol_arr[i], vrs[j]), vals)
+			m[i, j] = Nemo.evaluate(derivative(pol_arr[i], vrs[j]), vals)
 		end
 	end
 	return (m)
@@ -484,7 +495,7 @@ function get_weights(ode, non_identifiable_parameters)
 	s = length(mu) + n
 
 	current_level = 0
-	visible_states = Dict{Int, Set{fmpq_mpoly}}(current_level => Set{fmpq_mpoly}())
+	visible_states = Dict{Int, Set{QQMPolyRingElem}}(current_level => Set{QQMPolyRingElem}())
 	for eq in y_eqs
 		numer, denom = unpack_fraction(eq[2])
 		# visible states must be in non-jet representation!
@@ -528,8 +539,8 @@ function get_weights(ode, non_identifiable_parameters)
 				end
 
 				# find states that newly appeared
-				visible_states[current_level] = union(get(visible_states, current_level, Set{fmpq_mpoly}()), Set(get_order_var(vn, non_jet_ring)[1] for vn in vars(numer)))
-				visible_states[current_level] = union(get(visible_states, current_level, Set{fmpq_mpoly}()), Set(get_order_var(vd, non_jet_ring)[1] for vd in vars(denom)))
+				visible_states[current_level] = union(get(visible_states, current_level, Set{QQMPolyRingElem}()), Set(get_order_var(vn, non_jet_ring)[1] for vn in vars(numer)))
+				visible_states[current_level] = union(get(visible_states, current_level, Set{QQMPolyRingElem}()), Set(get_order_var(vd, non_jet_ring)[1] for vd in vars(denom)))
 
 				# add previous level to "what we have seen so far"-set
 				union!(seen_so_far, visible_states[current_level-1])
@@ -547,7 +558,7 @@ function get_weights(ode, non_identifiable_parameters)
 			break
 		end
 	end
-	weights = Dict{fmpq_mpoly, Int64}()
+	weights = Dict{QQMPolyRingElem, Int64}()
 	max_level = current_level - 1
 	for (level, states) in visible_states
 		for st in states

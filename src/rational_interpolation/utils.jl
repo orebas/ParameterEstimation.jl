@@ -8,7 +8,7 @@
 This function evaluates the derivatives of the interpolated function `y_function_name` using the `interpolant` object.
 	Derivatives are substituted into the polynomial system.
 """
-function eval_derivs!(polynomial_system, interpolant::Interpolant,
+function eval_derivs(polynomial_system, interpolant::Interpolant,
 	y_function_name,
 	inputs::Vector{ModelingToolkit.Equation},
 	identifiability_result;
@@ -18,16 +18,7 @@ function eval_derivs!(polynomial_system, interpolant::Interpolant,
 		for (y_func, y_deriv_order) in pairs(identifiability_result["Y_eq"])
 			if occursin(y_function_name, string(y_func))
 				y_derivs_vals = Dict(ParameterEstimation.nemo2hc(y_func) => (nth_deriv_at(interpolant.f, y_deriv_order, at_time)))  #check for off-by-one in derivb o
-				#display("eval_derivs, line 21")
-				#display(y_derivs_vals)  #DEBUG
-				#display(polynomial_system)
-				#for testp in polynomial_system
-				#	display(testp)
-				#	display(ParameterEstimation.nemo2hc.(testp))
-				#end
-				#display(ParameterEstimation.nemo2hc.(polynomial_system))
-
-				#display("did it fail?")
+				#println(y_derivs_vals)  #DEBUG
 				polynomial_system = HomotopyContinuation.evaluate(ParameterEstimation.nemo2hc.(polynomial_system),
 					y_derivs_vals)
 			end
@@ -47,10 +38,10 @@ function eval_derivs!(polynomial_system, interpolant::Interpolant,
 			end
 		end
 	elseif isequal(method, :msolve)
-		y_derivs = Vector{Nemo.fmpq_mpoly}()
-		y_vals = Vector{Nemo.fmpq}()
-		u_derivs = Vector{Nemo.fmpq_mpoly}()
-		u_vals = Vector{Nemo.fmpq}()
+		y_derivs = Vector{Nemo.QQMPolyRingElem}()
+		y_vals = Vector{Nemo.QQFieldElem}()
+		u_derivs = Vector{Nemo.QQMPolyRingElem}()
+		u_vals = Vector{Nemo.QQFieldElem}()
 		for (y_func, y_deriv_order) in pairs(identifiability_result["Y_eq"])
 			if occursin(y_function_name, string(y_func))
 				push!(y_derivs, y_func)

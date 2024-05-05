@@ -23,55 +23,55 @@ This function performs the key step in parameter estimation.
 - `System`: the polynomial system with the interpolated data applied. This system is compatible with `HomotopyContinuation` solving.
 """
 function interpolate(identifiability_result, data_sample,
-        measured_quantities, inputs; interpolator,
-        diff_order::Int = 1, at_t::Float = 0.0,   #TODO(orebas)should we remove diff_order?
-        method::Symbol = :homotopy)
-    polynomial_system = identifiability_result["polynomial_system"]
-        #####OB1#####
+	measured_quantities, inputs; interpolator,
+	diff_order::Int = 1, at_t::Float = 0.0,   #TODO(orebas)should we remove diff_order?
+	method::Symbol = :homotopy)
+	polynomial_system = identifiability_result["polynomial_system"]
+	#####OB1#####
 	#display("in rational_interpolation.jl line 31")
-    #display(typeof(polynomial_system))
-    #display(polynomial_system)
-    interpolants = Dict{Any, Interpolant}()
-    sampling_times = data_sample["t"]
-    for (key, sample) in pairs(data_sample)
-        if key == "t"
-            continue
-        end
-        y_function_name = map(x -> replace(string(x.lhs), "(t)" => ""),
-            filter(x -> string(x.rhs) == string(key),
-                measured_quantities))[1]
-        interpolant = ParameterEstimation.interpolate(sampling_times, sample,
-            interpolator,
-            diff_order)
-        interpolants[key] = interpolant
-        err = sum(abs.(sample - interpolant.f.(sampling_times))) / length(sampling_times)
-        @debug "Mean Absolute error in interpolation: $err interpolating $key"
-        #####OB1#####
+	#display(typeof(polynomial_system))
+	#display(polynomial_system)
+	interpolants = Dict{Any, Interpolant}()
+	sampling_times = data_sample["t"]
+	for (key, sample) in pairs(data_sample)
+		if key == "t"
+			continue
+		end
+		y_function_name = map(x -> replace(string(x.lhs), "(t)" => ""),
+			filter(x -> string(x.rhs) == string(key),
+				measured_quantities))[1]
+		interpolant = ParameterEstimation.interpolate(sampling_times, sample,
+			interpolator,
+			diff_order)
+		interpolants[key] = interpolant
+		err = sum(abs.(sample - interpolant.f.(sampling_times))) / length(sampling_times)
+		@debug "Mean Absolute error in interpolation: $err interpolating $key"
+		#####OB1#####
 		#display(interpolant)
-        #display(y_function_name)
-        #display(inputs)
-        #display(identifiability_result)
-        #display(method)
+		#display(y_function_name)
+		#display(inputs)
+		#display(identifiability_result)
+		#display(method)
 
-        polynomial_system = eval_derivs!(polynomial_system, interpolant, y_function_name,
-            inputs, identifiability_result, at_time = at_t, method = method)
-    end
-    #######OB1######
-    ###display("in rational_interpolation.jl line 49")
-    ###display(typeof(polynomial_system))
-    ###display(polynomial_system)
-    if isequal(method, :homotopy)
-        try
-            identifiability_result["polynomial_system_to_solve"] = HomotopyContinuation.System(polynomial_system)
-        catch KeyError
-            throw(ArgumentError("HomotopyContinuation threw a KeyError, it is possible that " *
-                                "you are using Unicode characters in your input. Consider " *
-                                "using ASCII characters instead."))
-        end
-    else
-        identifiability_result["polynomial_system_to_solve"] = polynomial_system
-    end
-    return interpolants
+		polynomial_system = eval_derivs(polynomial_system, interpolant, y_function_name,  #TODO probably add ! to eval_derivs name
+			inputs, identifiability_result, at_time = at_t, method = method)
+	end
+	#######OB1######
+	###display("in rational_interpolation.jl line 49")
+	###display(typeof(polynomial_system))
+	###display(polynomial_system)
+	if isequal(method, :homotopy)
+		try
+			identifiability_result["polynomial_system_to_solve"] = HomotopyContinuation.System(polynomial_system)
+		catch KeyError
+			throw(ArgumentError("HomotopyContinuation threw a KeyError, it is possible that " *
+								"you are using Unicode characters in your input. Consider " *
+								"using ASCII characters instead."))
+		end
+	else
+		identifiability_result["polynomial_system_to_solve"] = polynomial_system
+	end
+	return interpolants
 end
 
 """
@@ -81,6 +81,6 @@ This function performs a rational interpolation of the data `sample` at the poin
 It returns an `Interpolant` object that contains the interpolated function and its derivatives.
 """
 function interpolate(time, sample, interpolator, diff_order::Int = 1)
-    interpolated_function = ((interpolator.second))(time, sample)
-    return Interpolant(interpolated_function)
+	interpolated_function = ((interpolator.second))(time, sample)
+	return Interpolant(interpolated_function)
 end

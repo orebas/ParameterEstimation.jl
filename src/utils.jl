@@ -5,66 +5,34 @@ Converts a symbolic expression from Nemo to HomotopyContinuation format.
 """
 function nemo2hc(expr_tree::Union{Expr, Symbol})
 	#traverse expr_tree
-
-	#display(expr_tree)
 	if typeof(expr_tree) == Symbol
-		#display("SymbolHERE")
-		tempret = HomotopyContinuation.Expression(HomotopyContinuation.variables(expr_tree)[1])
-		#display(expr_tree)
-		#display(tempret)
-		return tempret
+		return HomotopyContinuation.Expression(HomotopyContinuation.variables(expr_tree)[1])
 	end
 	if typeof(expr_tree) == Expr
-		#display("HHH")
 		if expr_tree.head == :call
 			if expr_tree.args[1] in [:+, :-, :*, :/, :^, ://]
 				if length(expr_tree.args) == 2
-					#display("FMODE")
 					return eval(expr_tree.args[1])(nemo2hc(expr_tree.args[2]))
 				else
-					#=
-					println("HERE")
-					println("1 ", expr_tree.args[1])
-					println("2 ", expr_tree.args[2:end])
-					println("3 ", typeof(expr_tree.args[2]))
-					println("4 ", (expr_tree.args[2]))
-
-					println("5 ", typeof(nemo2hc(expr_tree.args[2])))
-					println("6 ", nemo2hc(expr_tree.args[2]))
-
-					println("7 ", typeof(-7))
-					println("8 ", nemo2hc(-7))
-
-					=#
-					tempmap = map(nemo2hc, expr_tree.args[2:end])
-
-					#println("map success", tempmap)
+					# println(expr_tree.args[2:end])
 					return reduce(eval(expr_tree.args[1]),
-						tempmap)
+						map(nemo2hc, expr_tree.args[2:end]))
 				end
-			else
-				display("fail")
-
 			end
-		else
-			return BigFloat(string(expr_tree))
 		end
 	end
 end
 
 function nemo2hc(expr_tree::QQMPolyRingElem)
-	#println("QQPolyRingElem	")
 	# println(expr_tree)
 	return nemo2hc(Meta.parse(string(expr_tree)))
 end
 
 function nemo2hc(expr_tree::Number)
-	#println("Number")
 	return expr_tree
 end
 
-function nemo2hc(expr_tree::Generic.FracFieldElem{<:MPolyRingElem})
-	#println("Frac")
+function nemo2hc(expr_tree::Nemo.Generic.FracFieldElem)
 	numer, denom = Nemo.numerator(expr_tree), Nemo.denominator(expr_tree)
 	return nemo2hc(numer) / nemo2hc(denom)
 end
@@ -139,9 +107,8 @@ function sample_data(model::ModelingToolkit.ODESystem,
 	else
 		sampling_times = range(time_interval[1], time_interval[2], length = num_points)
 	end
-
-	problem = ODEProblem(model, u0, time_interval, p_true)    #TODO:  should we require the user to give us a complete model?
-	solution_true = ModelingToolkit.solve(problem, solver, p = p_true,
+	problem = ODEProblem(ModelingToolkit.complete(model), u0, time_interval, Dict(ModelingToolkit.parameters(model) .=> p_true))
+	solution_true = ModelingToolkit.solve(problem, solver,
 		saveat = sampling_times;
 		abstol, reltol)
 	data_sample = OrderedDict{Any, Vector{T}}(Num(v.rhs) => solution_true[Num(v.rhs)]

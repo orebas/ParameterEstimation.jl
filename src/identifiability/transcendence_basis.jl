@@ -1,20 +1,20 @@
 """
-	algebraic_independence(Et::Vector{Nemo.fmpq_mpoly},
-						   indets::Vector{Nemo.fmpq_mpoly},
+	algebraic_independence(Et::Vector{Nemo.QQMPolyRingElem},
+						   indets::Vector{Nemo.QQMPolyRingElem},
 						   vals)
 
 Returns the indices of the equations in Et to be used for polynomial solving
 and the variables that form a transcendence basis.
 
 # Arguments
-- `Et::Vector{Nemo.fmpq_mpoly}`: The equations to be solved (must come from identifiability check).
-- `indets::Vector{Nemo.fmpq_mpoly}`: The indeterminates.
-- `vals::Vector{Nemo.fmpq_mpoly}`: The values of the indeterminates sampled by identifiability algorithm.
+- `Et::Vector{Nemo.QQMPolyRingElem}`: The equations to be solved (must come from identifiability check).
+- `indets::Vector{Nemo.QQMPolyRingElem}`: The indeterminates.
+- `vals::Vector{Nemo.QQMPolyRingElem}`: The values of the indeterminates sampled by identifiability algorithm.
 """
-function algebraic_independence(Et::Vector{Nemo.QQPolyRingElem},
-	indets::Vector{Nemo.QQPolyRingElem},
+function algebraic_independence(Et::Vector{Nemo.QQMPolyRingElem},
+	indets::Vector{Nemo.QQMPolyRingElem},
 	vals)
-	pivots = Vector{Nemo.QQPolyRingElem}()
+	pivots = Vector{Nemo.QQMPolyRingElem}()
 	Jacobian = jacobi_matrix(Et, indets, vals)
 	U = Nemo.lu(Jacobian)[end]
 	#find pivot columns in u
@@ -22,15 +22,15 @@ function algebraic_independence(Et::Vector{Nemo.QQPolyRingElem},
 		row = U[row_idx, :]
 		if !all(row .== 0)
 			pivot_col = findfirst(row .!= 0)
-			push!(pivots, indets[pivot_col[2]])
+			push!(pivots, indets[pivot_col])
 		end
 	end
 	current_idx = 1
-	output_rows = Jacobian[current_idx, :]
+	output_rows = Jacobian[[current_idx], :]
 	current_rank = 1
 	output_ids = [1]
 	for current_idx in 2:length(Et)
-		current = [output_rows; Jacobian[current_idx, :]]
+		current = vcat(output_rows, Jacobian[[current_idx], :])
 		if Nemo.rank(current) > current_rank
 			output_rows = current
 			push!(output_ids, current_idx)
