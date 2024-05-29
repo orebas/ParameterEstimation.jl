@@ -26,5 +26,4 @@ p_true = [1, 1 / 10, 1, 1 / 10, 1, 1 / 10, 1] # True Parameters
 data_sample = ParameterEstimation.sample_data(model, measured_quantities, time_interval,
                                               p_true, ic, datasize; solver = solver)
 
-res = ParameterEstimation.estimate(model, measured_quantities, data_sample;
-                                   method = :msolve)
+res = ParameterEstimation.estimate(model, measured_quantities, data_sample;)

@@ -46,7 +46,11 @@ function preprocess_ode(de::ModelingToolkit.ODESystem,
 				Dict(input_symbols .=>
 					gens_))
 		else
-			state_eqn_dict[substitute(state_vars[i], input_symbols .=> gens_)] = R(diff_eqs[i].rhs)
+			println("line 49")
+			display(diff_eqs[i].rhs)
+			temp = R(diff_eqs[i].rhs)
+			display(temp)
+			state_eqn_dict[substitute(state_vars[i], input_symbols .=> gens_)] = temp
 		end
 	end
 	for i in 1:length(measured_quantities)
