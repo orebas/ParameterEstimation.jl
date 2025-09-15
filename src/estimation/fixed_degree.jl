@@ -13,7 +13,7 @@ function backsolve_initial_conditions(model, E, report_time, inputs::Vector{Equa
 	initial_conditions = [E[s] for s in ModelingToolkit.unknowns(model)]
 	parameter_values = [E[p] for p in ModelingToolkit.parameters(model)]
 	tspan = (E.at_time, report_time)  #this is almost always backwards!
-	
+
 	ode_equations = ModelingToolkit.equations(model)
 	ode_equations = substitute(ode_equations,
 		Dict(each.lhs => Num(each.rhs) for each in inputs))
@@ -21,9 +21,9 @@ function backsolve_initial_conditions(model, E, report_time, inputs::Vector{Equa
 	@named new_model = ODESystem(ode_equations, t, ModelingToolkit.unknowns(model),
 		ModelingToolkit.parameters(model))
 	prob = ODEProblem(
-		ModelingToolkit.complete(new_model), 
-		initial_conditions, 
-		tspan, 
+		ModelingToolkit.complete(new_model),
+		initial_conditions,
+		tspan,
 		Dict(ModelingToolkit.parameters(model) .=> parameter_values))
 	saveat = range(tspan[1], tspan[2], length = length(data_sample["t"]))
 
@@ -100,6 +100,7 @@ function estimate_single_interpolator(model::ModelingToolkit.ODESystem,
 	parameters = ModelingToolkit.parameters(model)
 	states = ModelingToolkit.unknowns(model)
 	num_parameters = length(parameters) + length(states)
+	println("[DEBUG-PE:fixed_degree.jl:103] Interpolating with ", interpolator.first, " at_time=", at_time)
 	@debug "Interpolating sample data via interpolation method $(interpolator.first)"
 	if !haskey(data_sample, "t")
 		@warn "No sampling time points found in data sample. Assuming uniform sampling t ∈ [$(time_interval[1]), $(time_interval[2])]."
@@ -111,12 +112,20 @@ function estimate_single_interpolator(model::ModelingToolkit.ODESystem,
 		diff_order = num_parameters + 1,   #todo(OREBAS): is this always forcing num_parameters + 1 derivatives?
 		at_t = at_time,
 		method = method)
-		
+
 	if method == :homotopy
-		all_solutions = solve_via_homotopy(identifiability_result, model;
+		@info "Solving polynomial system via homotopy method"
+		println("[DEBUG-PE:fixed_degree.jl:119] Solving via homotopy at_time=", at_time)
+		@time all_solutions = solve_via_homotopy(identifiability_result, model;
 			real_tol = real_tol)
+		println("[DEBUG-PE:fixed_degree.jl:121] Found ", length(all_solutions), " raw solutions")
+		for (i, sol) in enumerate(all_solutions)
+			println("[DEBUG-PE] Solution ", i, ": ", sol)
+		end
 	elseif method == :msolve
-		all_solutions = solve_via_msolve(identifiability_result, model;
+		@info "Solving polynomial system via msolve method"
+		println("[DEBUG-PE:fixed_degree.jl:124] Solving via msolve")
+		@time all_solutions = solve_via_msolve(identifiability_result, model;
 			real_tol = real_tol)
 	else
 		throw(ArgumentError("Method $method not supported"))
@@ -126,10 +135,11 @@ function estimate_single_interpolator(model::ModelingToolkit.ODESystem,
 		interpolants, ReturnCode.Success, datasize, report_time)
 					 for each in all_solutions]
 
+	println("[DEBUG-PE:fixed_degree.jl:135] Backsolving initial conditions for ", length(all_solutions), " solutions")
 	all_solutions_R = [backsolve_initial_conditions(model, each, report_time, inputs, data_sample)
 					   for each in all_solutions]
 
-
+	println("[DEBUG-PE:fixed_degree.jl:140] Returning ", length(all_solutions_R), " final solutions")
 	#println(all_solutions_R)
 	return all_solutions_R
 end

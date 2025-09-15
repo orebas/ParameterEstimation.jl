@@ -22,7 +22,7 @@ function solve_ode(model, estimate::EstimationResult, inputs::Vector{Equation}, 
 	solver = Tsit5(), return_ode = false, abstol = 1e-12, reltol = 1e-12)
 	initial_conditions = [estimate[s] for s in ModelingToolkit.unknowns(model)]
 	parameter_values = [estimate[p] for p in ModelingToolkit.parameters(model)]
-	tspan = (estimate.at_time, data_sample["t"][end] + estimate.at_time)
+	tspan = (data_sample["t"][1], data_sample["t"][end])
 	ode_equations = ModelingToolkit.equations(model)
 	ode_equations = substitute(ode_equations,
 		Dict(each.lhs => Num(each.rhs) for each in inputs))
@@ -30,9 +30,9 @@ function solve_ode(model, estimate::EstimationResult, inputs::Vector{Equation}, 
 	@named new_model = ODESystem(ode_equations, t, ModelingToolkit.unknowns(model),
 		ModelingToolkit.parameters(model))
 	prob = ODEProblem(
-		ModelingToolkit.complete(new_model), 
-		initial_conditions, tspan, 
-		Dict(ModelingToolkit.parameters(new_model) .=> parameter_values)
+		ModelingToolkit.complete(new_model),
+		initial_conditions, tspan,
+		Dict(ModelingToolkit.parameters(new_model) .=> parameter_values),
 	)
 	ode_solution = ModelingToolkit.solve(prob, solver,
 		saveat = range(tspan[1], tspan[2],
@@ -46,7 +46,7 @@ function solve_ode(model, estimate::EstimationResult, inputs::Vector{Equation}, 
 			err += ParameterEstimation.mean_abs_err(ode_solution(data_sample["t"])[key],
 				sample)
 		end
-		err /= length(data_sample)
+		err /= (length(data_sample) - 1)
 	else
 		err = 1e+10
 	end

@@ -15,11 +15,25 @@ function eval_derivs(polynomial_system, interpolant::Interpolant,
 	at_time = 0.0,
 	method = :homotopy)
 	if isequal(method, :homotopy)
+		println("Evaluating derivatives assuming homotopy method")
+		println("[DEBUG-PE:utils.jl] Processing derivatives for $y_function_name")
+		derivatives_used = []
 		for (y_func, y_deriv_order) in pairs(identifiability_result["Y_eq"])
 			if occursin(y_function_name, string(y_func))
-				y_derivs_vals = Dict(ParameterEstimation.nemo2hc(y_func) => (nth_deriv_at(interpolant.f, y_deriv_order, at_time)))  #check for off-by-one in derivb o
+				push!(derivatives_used, (y_func, y_deriv_order))
+			end
+		end
+		println("[DEBUG-PE:utils.jl] Found $(length(derivatives_used)) derivatives matching $y_function_name")
+		for (func, order) in sort(derivatives_used, by=x->x[2])
+			println("[DEBUG-PE:utils.jl]   $func => order $order")
+		end
+		
+		for (y_func, y_deriv_order) in pairs(identifiability_result["Y_eq"])
+			if occursin(y_function_name, string(y_func))
+				println("Evaluating derivative of $y_func (order $y_deriv_order)")
+				@time y_derivs_vals = Dict(ParameterEstimation.nemo2hc(y_func) => (nth_deriv_at(interpolant.f, y_deriv_order, at_time)))  #check for off-by-one in derivb o
 				#println(y_derivs_vals)  #DEBUG
-				polynomial_system = HomotopyContinuation.evaluate(ParameterEstimation.nemo2hc.(polynomial_system),
+				@time polynomial_system = HomotopyContinuation.evaluate(ParameterEstimation.nemo2hc.(polynomial_system),
 					y_derivs_vals)
 			end
 		end
@@ -27,6 +41,7 @@ function eval_derivs(polynomial_system, interpolant::Interpolant,
 			t = arguments(inputs[1].lhs)[1]
 			tau = Taylor1(u_deriv_order)   #TODO(orebas) replace taylor series with forwardDiff, perhaps?
 			for input_eq in inputs
+				println("Evaluating derivative of $u_funct")
 				u_function_name = replace(string(input_eq.lhs), "(t)" => "")
 				if occursin(u_function_name, string(u_funct))
 					u_derivs_vals = Dict(ParameterEstimation.nemo2hc(u_funct) => substitute(input_eq.rhs,

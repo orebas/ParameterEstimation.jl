@@ -1,0 +1,8 @@
+ERROR: SystemError: opening file "/home/orebas/.julia/dev/ParameterEstimation/results/FINAL3/filetree/pe/biohydrogenation_0_0/script.jl": No such file or directory
+Stacktrace:
+ [1] include(mod::Module, _path::String)
+   @ Base ./Base.jl:562
+ [2] exec_options(opts::Base.JLOptions)
+   @ Base ./client.jl:323
+ [3] _start()
+   @ Base ./client.jl:531

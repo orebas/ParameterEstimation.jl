@@ -37,9 +37,11 @@ function interpolate(identifiability_result, data_sample,
 		y_function_name = map(x -> replace(string(x.lhs), "(t)" => ""),
 			filter(x -> string(x.rhs) == string(key),
 				measured_quantities))[1]
+		println("Interpolating $key")
 		interpolant = ParameterEstimation.interpolate(sampling_times, sample,
 			interpolator,
 			diff_order)
+        println("Interpolation complete")
 		interpolants[key] = interpolant
 		err = sum(abs.(sample - interpolant.f.(sampling_times))) / length(sampling_times)
 		@debug "Mean Absolute error in interpolation: $err interpolating $key"

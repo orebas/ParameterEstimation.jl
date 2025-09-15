@@ -35,17 +35,28 @@ function estimate(model::ModelingToolkit.ODESystem,
 	interpolators = nothing, real_tol = 1e-14,
 	threaded = Threads.nthreads() > 1, filtermode = :new, parameter_constraints = nothing, ic_constraints = nothing) where {T <: Float}
 
-	#println("DEBUG")
+	println("\n[DEBUG-PE:estimate.jl:38] ========== Starting ParameterEstimation.estimate ==========")
+	println("[DEBUG-PE] Model type: ", typeof(model))
+	println("[DEBUG-PE] at_time: ", at_time)
+	println("[DEBUG-PE] report_time: ", report_time) 
+	println("[DEBUG-PE] Data keys: ", keys(data_sample))
+	println("[DEBUG-PE] Time range: [", minimum(data_sample["t"]), ", ", maximum(data_sample["t"]), "]")
+	println("[DEBUG-PE] Parameter constraints: ", parameter_constraints)
+	println("[DEBUG-PE] IC constraints: ", ic_constraints)
+	println("[DEBUG-PE] Threaded: ", threaded)
+	
 	if !(method in [:homotopy, :msolve])
 		throw(ArgumentError("Method $method is not supported, must be one of :homotopy or :msolve."))
 	end
 	if threaded
-		result = estimate_threaded(model, measured_quantities, inputs, data_sample;  
+		println("[DEBUG-PE] Using threaded estimation")
+		result = estimate_threaded(model, measured_quantities, inputs, data_sample;
 			at_time = at_time, solver = solver,
 			interpolators = interpolators,
 			method = method,
 			real_tol = real_tol)
 	else
+		println("[DEBUG-PE] Using serial estimation")
 		result = estimate_serial(model, measured_quantities,
 			inputs,
 			data_sample;

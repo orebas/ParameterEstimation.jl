@@ -1,6 +1,6 @@
 function check_constraints(estimate, id, parameter_constraints, ic_constraints)
 	sat = true
-	
+
 	nonid = string.(id.identifiability["nonidentifiable"])
 	nonid = map(k -> replace(string(k), r"\([t0-9\.]*\)" => ""), nonid)
 
@@ -25,8 +25,8 @@ function check_constraints(estimate, id, parameter_constraints, ic_constraints)
 	if (!isnothing(ic_constraints))
 		for (k, v) in pairs(estimate.states)
 			if replace(string(k), r"\([t0-9\.]*\)" => "") in nonid
-                                continue
-                        end
+				continue
+			end
 			if (haskey(ic_constraints, k))
 				if !(ic_constraints[k][1] <= v && v <= ic_constraints[k][2])
 					sat = false
@@ -78,7 +78,7 @@ function new_clustering(estimates, tol = 1e-3)
 	return new_estimates
 end
 
-function post_process(id, estimates, filtermode = :new, parameter_constraints = nothing, ic_constraints = nothing; threaded=false)
+function post_process(id, estimates, filtermode = :new, parameter_constraints = nothing, ic_constraints = nothing; threaded = false)
 	if threaded
 		estimates = filter(x -> !isnothing(x), estimates)
 		estimates = vcat(estimates...)
@@ -87,14 +87,17 @@ function post_process(id, estimates, filtermode = :new, parameter_constraints = 
 	#filter out the empty vectors
 	estimates = filter(x -> length(x) > 0, estimates)
 	estimates = filter(x -> x[1].return_code == ReturnCode.Success, estimates)
+	#println("estimates1: ", estimates)
 
 	if (filtermode == :new)
+		#println("estimates2: ", estimates)
 		estimates = collect(Iterators.flatten(estimates))
 		estimates = filter(x -> check_constraints(x, id, parameter_constraints, ic_constraints), estimates)
 		estimates = sort(estimates, by = x -> x.err)
-
+		#println("estimates3: ", estimates)
 		estimates_clustered_by_params = new_clustering(estimates, 1e-2)  #TODO(orebas): this is a magic number.
 		estimates_clustered_by_params = filter(x -> (x.err < 1.0), estimates_clustered_by_params)  #also a magic number
+		#println("estimates4: ", estimates_clustered_by_params)
 		return estimates_clustered_by_params
 	else
 		best_solution = nothing
